@@ -182,7 +182,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", () => {
-        const tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+        let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
         const tableBody = document.querySelector("#taskTable tbody");
         const addTasksBtn = document.getElementById("addTasks");
         const commonDistractionsEl = document.getElementById("commonDistractions");
@@ -207,6 +207,7 @@
             tableBody.innerHTML = "";
             tasks.forEach((task, index) => {
                 const row = document.createElement("tr");
+                row.setAttribute("data-index", index);
                 row.innerHTML = `
                     <td>${task.date}</td>
                     <td>${task.name}</td>
@@ -221,7 +222,7 @@
             });
         }
 
-        function deleteTask(index) {
+        window.deleteTask = function(index) {
             tasks.splice(index, 1);
             localStorage.setItem("tasks", JSON.stringify(tasks));
             populateTable();

@@ -126,6 +126,8 @@
 <div class="container">
     <div class="form-container">
         <h3>隔日最重要任務</h3>
+        <label for="taskDate">任務日期</label>
+        <input type="date" id="taskDate" value="${new Date().toISOString().split('T')[0]}">
         <label for="taskInput1">任務 1</label>
         <input type="text" id="taskInput1" placeholder="輸入任務 1">
         <label for="taskInput2">任務 2</label>
@@ -188,6 +190,7 @@
         const commonDistractionsEl = document.getElementById("commonDistractions");
         const dateRangeStart = document.getElementById("dateRangeStart");
         const dateRangeEnd = document.getElementById("dateRangeEnd");
+        const taskDate = document.getElementById("taskDate");
 
         const taskInputs = [
             document.getElementById("taskInput1"),
@@ -323,11 +326,11 @@
         }
 
         addTasksBtn.addEventListener("click", () => {
-            const today = new Date().toISOString().split("T")[0];
+            const selectedDate = taskDate.value;
             taskInputs.forEach(input => {
                 if (input.value.trim()) {
                     tasks.push({
-                        date: today,
+                        date: selectedDate,
                         name: input.value,
                         completed: "否",
                         reason: "無",

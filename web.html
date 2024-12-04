@@ -4,54 +4,118 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>分心追蹤表單</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f9f9f9;
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #0e1621;
+            color: #ffffff;
         }
         h1 {
             text-align: center;
-            color: #333;
+            margin: 20px 0;
+            font-size: 2.5em;
+            color: #00d4ff;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            max-width: 1200px;
+            margin: auto;
+            padding: 20px;
+        }
+        .form-container, .reminder-container, .chart-container {
+            background: #1b2735;
+            border-radius: 10px;
+            padding: 20px;
+            flex: 1;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        .form-container input, .form-container button {
+            width: calc(100% - 20px);
+            margin-bottom: 10px;
+            padding: 10px;
+            font-size: 1em;
+            border: none;
+            border-radius: 5px;
+            background: #121f30;
+            color: #00d4ff;
+        }
+        .form-container button {
+            background: linear-gradient(45deg, #00d4ff, #0067ff);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .form-container button:hover {
+            background: linear-gradient(45deg, #0067ff, #00d4ff);
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin: 20px 0;
+            margin-top: 20px;
         }
-        table, th, td {
-            border: 1px solid #ddd;
-        }
-        th, td {
+        table th, table td {
             padding: 10px;
             text-align: center;
+            border: 1px solid #2b3947;
         }
-        th {
-            background-color: #0074d9;
-            color: white;
+        table th {
+            background: #0067ff;
+            color: #ffffff;
         }
-        tr:nth-child(even) {
-            background-color: #f2f2f2;
+        table td {
+            background: #1b2735;
         }
-        button {
-            background-color: #0074d9;
-            color: white;
+        table td button {
+            background: #ff4b5c;
+            color: #ffffff;
             border: none;
-            padding: 10px 20px;
-            margin: 10px;
-            cursor: pointer;
+            padding: 5px 10px;
             border-radius: 5px;
+            cursor: pointer;
         }
-        button:hover {
-            background-color: #0056a3;
+        table td button:hover {
+            background: #d63a4a;
         }
-        input {
-            padding: 5px;
-            margin: 5px;
-            width: 150px;
+        .reminder-container ul {
+            list-style: none;
+            padding: 0;
         }
-        .form-container {
-            margin-bottom: 20px;
+        .reminder-container li {
+            margin: 5px 0;
+            color: #00d4ff;
+        }
+        .chart-container {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+        }
+        .chart-wrapper {
+            flex: 1;
+            height: 400px;
+        }
+        canvas {
+            width: 100% !important;
+            height: 100% !important;
+            background: #1b2735;
+            border-radius: 10px;
+            padding: 10px;
+        }
+        .filter-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .filter-container input {
+            background: #121f30;
+            color: #00d4ff;
+            border: none;
+            border-radius: 5px;
+            padding: 5px 10px;
         }
     </style>
 </head>
@@ -59,16 +123,35 @@
 
 <h1>分心追蹤表單</h1>
 
-<!-- Input Form -->
-<div class="form-container">
-    <input type="date" id="dateInput" placeholder="日期">
-    <input type="text" id="nameInput" placeholder="任務名稱">
-    <input type="number" id="priorityInput" placeholder="優先級" min="1">
-    <select id="completedInput">
-        <option value="是">是</option>
-        <option value="否">否</option>
-    </select>
-    <button id="addTask">新增任務</button>
+<div class="container">
+    <div class="form-container">
+        <h3>隔日最重要任務</h3>
+        <label for="taskInput1">任務 1</label>
+        <input type="text" id="taskInput1" placeholder="輸入任務 1">
+        <label for="taskInput2">任務 2</label>
+        <input type="text" id="taskInput2" placeholder="輸入任務 2">
+        <label for="taskInput3">任務 3</label>
+        <input type="text" id="taskInput3" placeholder="輸入任務 3">
+        <label for="taskInput4">任務 4</label>
+        <input type="text" id="taskInput4" placeholder="輸入任務 4">
+        <label for="taskInput5">任務 5</label>
+        <input type="text" id="taskInput5" placeholder="輸入任務 5">
+        <label for="taskInput6">任務 6</label>
+        <input type="text" id="taskInput6" placeholder="輸入任務 6">
+        <button id="addTasks">新增任務</button>
+    </div>
+
+    <div class="reminder-container">
+        <h3>常見分心原因與改善措施</h3>
+        <ul id="commonDistractions"></ul>
+    </div>
+</div>
+
+<div class="filter-container">
+    <label for="dateRangeStart">篩選日期：</label>
+    <input type="date" id="dateRangeStart">
+    <span>到</span>
+    <input type="date" id="dateRangeEnd">
 </div>
 
 <table id="taskTable">
@@ -76,78 +159,218 @@
         <tr>
             <th>日期</th>
             <th>任務名稱</th>
-            <th>優先級</th>
             <th>是否完成</th>
+            <th>分心原因</th>
             <th>分心次數</th>
-            <th>分心來源</th>
             <th>分心總時間</th>
-            <th>改進措施</th>
+            <th>改善措施</th>
+            <th>操作</th>
         </tr>
     </thead>
-    <tbody>
-        <!-- Rows will be dynamically added here -->
-    </tbody>
+    <tbody></tbody>
 </table>
 
+<div class="chart-container">
+    <div class="chart-wrapper">
+        <canvas id="distractionCountChart"></canvas>
+    </div>
+    <div class="chart-wrapper">
+        <canvas id="distractionTimeChart"></canvas>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", () => {
+        const tasks = JSON.parse(localStorage.getItem("tasks")) || [];
         const tableBody = document.querySelector("#taskTable tbody");
-        const addTaskBtn = document.getElementById("addTask");
+        const addTasksBtn = document.getElementById("addTasks");
+        const commonDistractionsEl = document.getElementById("commonDistractions");
+        const dateRangeStart = document.getElementById("dateRangeStart");
+        const dateRangeEnd = document.getElementById("dateRangeEnd");
 
-        // Load tasks from local storage or initialize
-        const storedTasks = JSON.parse(localStorage.getItem("tasks")) || [];
-        const tasks = [...storedTasks];
+        const taskInputs = [
+            document.getElementById("taskInput1"),
+            document.getElementById("taskInput2"),
+            document.getElementById("taskInput3"),
+            document.getElementById("taskInput4"),
+            document.getElementById("taskInput5"),
+            document.getElementById("taskInput6"),
+        ];
 
-        // Populate table
+        const distractionCountChartCtx = document.getElementById("distractionCountChart").getContext("2d");
+        const distractionTimeChartCtx = document.getElementById("distractionTimeChart").getContext("2d");
+
+        let distractionCountChart, distractionTimeChart;
+
         function populateTable() {
-            tableBody.innerHTML = ""; // Clear existing rows
-            tasks.forEach(task => {
+            tableBody.innerHTML = "";
+            tasks.forEach((task, index) => {
                 const row = document.createElement("tr");
                 row.innerHTML = `
                     <td>${task.date}</td>
                     <td>${task.name}</td>
-                    <td>${task.priority}</td>
-                    <td>${task.completed}</td>
-                    <td>${task.distractions || ""}</td>
-                    <td>${task.source || ""}</td>
-                    <td>${task.time || ""}</td>
-                    <td>${task.solution || ""}</td>
+                    <td contenteditable="true" data-index="${index}" data-field="completed">${task.completed || "否"}</td>
+                    <td contenteditable="true" data-index="${index}" data-field="reason">${task.reason || "無"}</td>
+                    <td contenteditable="true" data-index="${index}" data-field="distractions">${task.distractions || 0}</td>
+                    <td contenteditable="true" data-index="${index}" data-field="time">${task.time || 0}</td>
+                    <td contenteditable="true" data-index="${index}" data-field="solution">${task.solution || "無"}</td>
+                    <td><button onclick="deleteTask(${index})">刪除</button></td>
                 `;
                 tableBody.appendChild(row);
             });
         }
 
-        // Add a new task
-        addTaskBtn.addEventListener("click", () => {
-            const date = document.getElementById("dateInput").value;
-            const name = document.getElementById("nameInput").value;
-            const priority = document.getElementById("priorityInput").value;
-            const completed = document.getElementById("completedInput").value;
+        function deleteTask(index) {
+            tasks.splice(index, 1);
+            localStorage.setItem("tasks", JSON.stringify(tasks));
+            populateTable();
+            renderCommonDistractions();
+            updateCharts();
+        }
 
-            if (date && name && priority) {
-                const newTask = {
-                    date,
-                    name,
-                    priority: parseInt(priority, 10),
-                    completed,
-                    distractions: 0,
-                    source: "",
-                    time: "",
-                    solution: ""
-                };
-                tasks.push(newTask);
-                localStorage.setItem("tasks", JSON.stringify(tasks)); // Save to local storage
-                populateTable();
-                alert("任務新增成功！");
-            } else {
-                alert("請填寫完整的任務信息！");
+        function renderCommonDistractions() {
+            const reasons = new Map();
+            tasks.forEach(task => {
+                if (task.reason) {
+                    reasons.set(task.reason, task.solution || "無");
+                }
+            });
+
+            commonDistractionsEl.innerHTML = "";
+            reasons.forEach((solution, reason) => {
+                const li = document.createElement("li");
+                li.textContent = `原因: ${reason}, 改善措施: ${solution}`;
+                commonDistractionsEl.appendChild(li);
+            });
+        }
+
+        function updateCharts() {
+            const startDate = new Date(dateRangeStart.value || new Date());
+            const endDate = new Date(dateRangeEnd.value || new Date());
+
+            const filteredTasks = tasks.filter(task => {
+                const taskDate = new Date(task.date);
+                return taskDate >= startDate && taskDate <= endDate;
+            });
+
+            const dateData = {};
+            filteredTasks.forEach(task => {
+                if (!dateData[task.date]) {
+                    dateData[task.date] = { distractions: 0, time: 0 };
+                }
+                dateData[task.date].distractions += parseInt(task.distractions || 0, 10);
+                dateData[task.date].time += parseInt(task.time || 0, 10);
+            });
+
+            const labels = Object.keys(dateData).sort();
+            const distractionCounts = labels.map(date => dateData[date].distractions);
+            const distractionTimes = labels.map(date => dateData[date].time);
+
+            if (distractionCountChart) distractionCountChart.destroy();
+            if (distractionTimeChart) distractionTimeChart.destroy();
+
+            distractionCountChart = new Chart(distractionCountChartCtx, {
+                type: "line",
+                data: {
+                    labels,
+                    datasets: [{
+                        label: "每日分心次數",
+                        data: distractionCounts,
+                        borderColor: "#00d4ff",
+                        backgroundColor: "rgba(0, 212, 255, 0.1)",
+                        fill: true,
+                        tension: 0.4,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                    },
+                    scales: {
+                        x: { title: { display: true, text: "日期", color: "#ffffff" } },
+                        y: { title: { display: true, text: "分心次數", color: "#ffffff" } }
+                    }
+                }
+            });
+
+            distractionTimeChart = new Chart(distractionTimeChartCtx, {
+                type: "line",
+                data: {
+                    labels,
+                    datasets: [{
+                        label: "每日分心時間（分鐘）",
+                        data: distractionTimes,
+                        borderColor: "#ff4b5c",
+                        backgroundColor: "rgba(255, 75, 92, 0.1)",
+                        fill: true,
+                        tension: 0.4,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                    },
+                    scales: {
+                        x: { title: { display: true, text: "日期", color: "#ffffff" } },
+                        y: { title: { display: true, text: "分心時間（分鐘）", color: "#ffffff" } }
+                    }
+                }
+            });
+        }
+
+        addTasksBtn.addEventListener("click", () => {
+            const today = new Date().toISOString().split("T")[0];
+            taskInputs.forEach(input => {
+                if (input.value.trim()) {
+                    tasks.push({
+                        date: today,
+                        name: input.value,
+                        completed: "否",
+                        reason: "無",
+                        distractions: 0,
+                        time: 0,
+                        solution: "無"
+                    });
+                }
+                input.value = "";
+            });
+            localStorage.setItem("tasks", JSON.stringify(tasks));
+            populateTable();
+            renderCommonDistractions();
+            updateCharts();
+        });
+
+        tableBody.addEventListener("input", (event) => {
+            const target = event.target;
+            const index = target.getAttribute("data-index");
+            const field = target.getAttribute("data-field");
+
+            if (index !== null && field) {
+                tasks[index][field] = target.textContent;
+                localStorage.setItem("tasks", JSON.stringify(tasks));
+                renderCommonDistractions();
+                updateCharts();
             }
         });
 
-        // Initialize table
+        dateRangeStart.addEventListener("change", updateCharts);
+        dateRangeEnd.addEventListener("change", updateCharts);
+
+        // Initialize default date range (last 7 days)
+        const today = new Date();
+        const lastWeek = new Date();
+        lastWeek.setDate(today.getDate() - 7);
+        dateRangeStart.value = lastWeek.toISOString().split("T")[0];
+        dateRangeEnd.value = today.toISOString().split("T")[0];
+
+        // Initialize table, reminders, and charts
         populateTable();
+        renderCommonDistractions();
+        updateCharts();
     });
 </script>
-
 </body>
 </html>

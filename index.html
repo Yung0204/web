@@ -1,5 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,14 +8,14 @@
             font-family: 'Poppins', sans-serif;
             margin: 0;
             padding: 0;
-            background: #0e1621;
-            color: #ffffff;
+            background: #0b0f1a;
+            color: #d1d5db;
         }
         h1 {
             text-align: center;
             margin: 20px 0;
             font-size: 2.5em;
-            color: #00d4ff;
+            color: #0ff4c6;
         }
         .container {
             display: flex;
@@ -27,13 +25,35 @@
             margin: auto;
             padding: 20px;
         }
-        .form-container, .reminder-container, .chart-container {
-            background: #1b2735;
-            border-radius: 10px;
+        .form-container, .reminder-container, .timer-wrapper {
+            background: #141a29;
+            border-radius: 10px;    
             padding: 20px;
-            flex: 1;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
         }
+        .form-container {
+            flex: 1;
+        }
+
+        .right-container {
+            flex: 1; /* 右邊占一半空間 */
+            display: flex;
+            flex-direction: column; /* 讓內部元素上下排列 */
+            box-sizing: border-box;
+        }
+        .reminder-container {
+            flex: 2;
+            margin-bottom: 20px; /* 讓 reminder 和 timer 之間有點距離 */
+            
+        }
+
+        .timer-wrapper {
+            flex: 1; /* 分配較小空間給 timer */
+            display: flex;
+        }
+        
+
+
         .form-container input, .form-container button {
             width: calc(100% - 20px);
             margin-bottom: 10px;
@@ -41,33 +61,34 @@
             font-size: 1em;
             border: none;
             border-radius: 5px;
-            background: #121f30;
-            color: #00d4ff;
+            background: #1e2537;
+            color: #0ff4c6;
         }
-        .form-container button {
-            background: linear-gradient(45deg, #00d4ff, #0067ff);
+        .form-container button, .timer-wrapper button {
+            background: linear-gradient(45deg, #0ff4c6, #1e90ff);
             cursor: pointer;
             transition: all 0.3s ease;
         }
-        .form-container button:hover {
-            background: linear-gradient(45deg, #0067ff, #00d4ff);
+        .form-container button:hover, .timer-wrapper button:hover {
+            background: linear-gradient(45deg, #1e90ff, #0ff4c6);
         }
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
+            margin-bottom: 20px
         }
         table th, table td {
             padding: 10px;
             text-align: center;
-            border: 1px solid #2b3947;
+            border: 1px solid #2c364a;
         }
         table th {
-            background: #0067ff;
+            background: #1e90ff;
             color: #ffffff;
         }
         table td {
-            background: #1b2735;
+            background: #141a29;
         }
         table td button {
             background: #ff4b5c;
@@ -86,7 +107,7 @@
         }
         .reminder-container li {
             margin: 5px 0;
-            color: #00d4ff;
+            color: #0ff4c6;
         }
         .chart-container {
             display: flex;
@@ -111,11 +132,75 @@
             margin-bottom: 10px;
         }
         .filter-container input {
-            background: #121f30;
-            color: #00d4ff;
+            background: #1e2537;
+            color: #0ff4c6;
             border: none;
             border-radius: 5px;
             padding: 5px 10px;
+        }
+        .timer {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #141a29;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            flex: 1;
+        }
+        .timer-display {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.2em;
+            color: #ffffff;
+            text-align: center;
+            pointer-events: none; /* 防止點擊干擾 */
+        }
+        .progress-ring {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            margin-bottom: 10px;
+        }
+        .progress-ring circle {
+            fill: none;
+            stroke-width: 10;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+        .progress-ring__background {
+            stroke: #1e2537;
+        }
+        .progress-ring__progress {
+            stroke: #0ff4c6;
+            transition: stroke-dasharray 0.3s ease;
+        }
+        .timer-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .timer-buttons button {
+            width: 50px;
+            height: 50px;
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5em;
+            cursor: pointer;
+            background: #0ff4c6;
+            color: #ffffff;
+            transition: all 0.3s ease;
+        }
+        .timer-buttons button:hover {
+            background: #1e90ff;
+        }
+        .timer-buttons button svg {
+            width: 24px;
+            height: 24px;
         }
     </style>
 </head>
@@ -142,10 +227,73 @@
         <input type="text" id="taskInput6" placeholder="輸入任務 6">
         <button id="addTasks">新增任務</button>
     </div>
-
-    <div class="reminder-container">
-        <h3>常見分心原因與改善措施</h3>
-        <ul id="commonDistractions"></ul>
+    <div class="right-container">
+   
+        <div class="reminder-container">
+            <h3>備忘錄</h3>
+            <div id="editableReminder" contenteditable="true" style="border: 1px solid #2c364a; padding: 10px;">
+                在此輸入備忘錄內容...
+            </div>        
+        </div>
+        
+        <div class="timer-wrapper">
+            <div class="timer">
+                <h3>專注計時器</h3>
+                <div class="progress-ring">
+                    <svg width="120" height="120">
+                        <circle class="progress-ring__background" r="55" cx="60" cy="60"></circle>
+                        <circle class="progress-ring__progress" r="55" cx="60" cy="60" id="focusProgressCircle"></circle>
+                    </svg>
+                    <div class="timer-display" id="focusTimerDisplay">00:00:00</div>
+                </div>
+                
+                <div class="timer-buttons">
+                    <button id="startFocusTimer">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M8 5v14l11-7z" />
+                        </svg>
+                    </button>
+                    <button id="pauseFocusTimer">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M6 5h4v14H6zm8 0h4v14h-4z" />
+                        </svg>
+                    </button>
+                    <button id="stopFocusTimer">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M6 6h12v12H6z" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div class="timer">
+                <h3>休息計時器</h3>
+                <div class="progress-ring">
+                    <svg width="120" height="120">
+                        <circle class="progress-ring__background" r="55" cx="60" cy="60"></circle>
+                        <circle class="progress-ring__progress" r="55" cx="60" cy="60" id="breakProgressCircle"></circle>
+                    </svg>
+                    <div class="timer-display" id="breakTimerDisplay">00:00:00</div>
+                </div>
+                
+                <div class="timer-buttons">
+                    <button id="startBreakTimer">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M8 5v14l11-7z" />
+                        </svg>
+                    </button>
+                    <button id="pauseBreakTimer">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M6 5h4v14H6zm8 0h4v14h-4z" />
+                        </svg>
+                    </button>
+                    <button id="stopBreakTimer">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M6 6h12v12H6z" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -187,7 +335,6 @@
         let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
         const tableBody = document.querySelector("#taskTable tbody");
         const addTasksBtn = document.getElementById("addTasks");
-        const commonDistractionsEl = document.getElementById("commonDistractions");
         const dateRangeStart = document.getElementById("dateRangeStart");
         const dateRangeEnd = document.getElementById("dateRangeEnd");
         const taskDate = document.getElementById("taskDate");
@@ -200,6 +347,123 @@
             document.getElementById("taskInput5"),
             document.getElementById("taskInput6"),
         ];
+
+        const focusTimerDisplay = document.getElementById("focusTimerDisplay");
+        const breakTimerDisplay = document.getElementById("breakTimerDisplay");
+        const startFocusTimerBtn = document.getElementById("startFocusTimer");
+        const pauseFocusTimerBtn = document.getElementById("pauseFocusTimer");
+        const stopFocusTimerBtn = document.getElementById("stopFocusTimer");
+        const startBreakTimerBtn = document.getElementById("startBreakTimer");
+        const pauseBreakTimerBtn = document.getElementById("pauseBreakTimer");
+        const stopBreakTimerBtn = document.getElementById("stopBreakTimer");
+
+        const focusProgressCircle = document.getElementById("focusProgressCircle");
+        const breakProgressCircle = document.getElementById("breakProgressCircle");
+
+        const radius = focusProgressCircle.r.baseVal.value;
+        const circumference = 2 * Math.PI * radius;
+        focusProgressCircle.style.strokeDasharray = `${circumference} ${circumference}`;
+        focusProgressCircle.style.strokeDashoffset = circumference;
+        breakProgressCircle.style.strokeDasharray = `${circumference} ${circumference}`;
+        breakProgressCircle.style.strokeDashoffset = circumference;
+
+        let focusTimerInterval, breakTimerInterval;
+        let focusSeconds = 0, breakSeconds = 0;
+        let isFocusPaused = false, isBreakPaused = false;
+
+        function formatTime(seconds) {
+            const hrs = String(Math.floor(seconds / 3600)).padStart(2, '0');
+            const mins = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0');
+            const secs = String(seconds % 60).padStart(2, '0');
+            return `${hrs}:${mins}:${secs}`;
+        }
+
+        function setProgress(circle, percentage) {
+            const offset = circumference - (percentage / 100) * circumference;
+            circle.style.strokeDashoffset = offset;
+        }
+
+        function startFocusTimer() {
+            if (isFocusPaused) {
+                isFocusPaused = false;
+            } else {
+                focusSeconds = 0;
+            }
+            clearInterval(focusTimerInterval);
+            focusTimerInterval = setInterval(() => {
+                focusSeconds++;
+                focusTimerDisplay.textContent = `${formatTime(focusSeconds)}`;
+                setProgress(focusProgressCircle, (focusSeconds % 1500) / 15); // Assuming a 25-minute cycle
+            }, 1000);
+        }
+
+        function pauseFocusTimer() {
+            isFocusPaused = true;
+            clearInterval(focusTimerInterval);
+        }
+
+        function stopFocusTimer() {
+            clearInterval(focusTimerInterval);
+            focusSeconds = 0;
+            focusTimerDisplay.textContent = `00:00:00`;
+            setProgress(focusProgressCircle, 0);
+        }
+
+        function startBreakTimer() {
+            if (isBreakPaused) {
+                isBreakPaused = false;
+            } else {
+                breakSeconds = 0;
+            }
+            clearInterval(breakTimerInterval);
+            breakTimerInterval = setInterval(() => {
+                breakSeconds++;
+                breakTimerDisplay.textContent = `${formatTime(breakSeconds)}`;
+                setProgress(breakProgressCircle, (breakSeconds % 300) / 3); // Assuming a 5-minute break
+            }, 1000);
+        }
+
+        function pauseBreakTimer() {
+            isBreakPaused = true;
+            clearInterval(breakTimerInterval);
+        }
+
+        function stopBreakTimer() {
+            clearInterval(breakTimerInterval);
+            breakSeconds = 0;
+            breakTimerDisplay.textContent = ` 00:00:00`;
+            setProgress(breakProgressCircle, 0);
+        }
+
+        // Ensure that buttons are attached to corresponding event listeners
+        startFocusTimerBtn.addEventListener("click", startFocusTimer);
+        pauseFocusTimerBtn.addEventListener("click", pauseFocusTimer);
+        stopFocusTimerBtn.addEventListener("click", stopFocusTimer);
+        startBreakTimerBtn.addEventListener("click", startBreakTimer);
+        pauseBreakTimerBtn.addEventListener("click", pauseBreakTimer);
+        stopBreakTimerBtn.addEventListener("click", stopBreakTimer);
+
+                
+
+        // 載入 Local Storage 中的備忘錄內容
+        const savedReminder = localStorage.getItem("editableReminder");
+        if (savedReminder) {
+            document.getElementById("editableReminder").innerText = savedReminder;
+        }
+
+         // 當備忘錄內容被編輯時，自動保存到 Local Storage
+        document.getElementById("editableReminder").addEventListener("input", () => {
+            const reminderContent = document.getElementById("editableReminder").innerText;
+        
+            if (reminderContent.trim() === "") {
+                // 若內容為空，則從 Local Storage 中移除該項目
+                localStorage.removeItem("editableReminder");
+            } else {
+                // 否則，保存到 Local Storage
+                localStorage.setItem("editableReminder", reminderContent);
+            }
+        });
+
 
         const distractionCountChartCtx = document.getElementById("distractionCountChart").getContext("2d");
         const distractionTimeChartCtx = document.getElementById("distractionTimeChart").getContext("2d");
@@ -229,25 +493,10 @@
             tasks.splice(index, 1);
             localStorage.setItem("tasks", JSON.stringify(tasks));
             populateTable();
-            renderCommonDistractions();
             updateCharts();
         }
 
-        function renderCommonDistractions() {
-            const reasons = new Map();
-            tasks.forEach(task => {
-                if (task.reason) {
-                    reasons.set(task.reason, task.solution || "無");
-                }
-            });
-
-            commonDistractionsEl.innerHTML = "";
-            reasons.forEach((solution, reason) => {
-                const li = document.createElement("li");
-                li.textContent = `原因: ${reason}, 改善措施: ${solution}`;
-                commonDistractionsEl.appendChild(li);
-            });
-        }
+ 
 
         function updateCharts() {
             const startDate = new Date(dateRangeStart.value || new Date());
@@ -343,7 +592,6 @@
             });
             localStorage.setItem("tasks", JSON.stringify(tasks));
             populateTable();
-            renderCommonDistractions();
             updateCharts();
         });
 
@@ -355,7 +603,6 @@
             if (index !== null && field) {
                 tasks[index][field] = target.textContent;
                 localStorage.setItem("tasks", JSON.stringify(tasks));
-                renderCommonDistractions();
                 updateCharts();
             }
         });

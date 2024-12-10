@@ -148,6 +148,59 @@
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
             flex: 1;
         }
+
+        .timer-settings {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 50px;
+            background: #1e2537;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .timer-settings label {
+            font-size: 1.1em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #d1d5db;
+            display: block;
+        }
+
+        .timer-settings .input-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .timer-settings input {
+            width: 80px;
+            padding: 8px;
+            font-size: 1em;
+            border: 2px solid #0ff4c6;
+            border-radius: 5px;
+            background: #1b2735;
+            color: #ffffff;
+            text-align: center;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+            transition: border-color 0.3s ease;
+        }
+
+        .timer-settings input:focus {
+            border-color: #1e90ff;
+            outline: none;
+        }
+
+        .timer-settings .separator {
+            width: 80%;
+            height: 1px;
+            background: #2c364a;
+            margin: 10px auto;
+        }
+
         .timer-display {
             position: absolute;
             top: 50%;
@@ -158,6 +211,16 @@
             text-align: center;
             pointer-events: none; /* 防止點擊干擾 */
         }
+
+        .timer-settings h3 {
+            margin-bottom: 5px; /* 縮小與下方的距離 */
+        }
+
+        .timer-settings h6 {
+            margin-top: 0; /* 確保 h6 與上方無多餘距離 */
+            margin-bottom: 10px; /* 可根據需求進一步調整 */
+        }
+
         .progress-ring {
             position: relative;
             width: 120px;
@@ -238,7 +301,13 @@
         
         <div class="timer-wrapper">
             <div class="timer">
-                <h3>專注計時器</h3>
+                <div class="timer-settings">
+                    <h3>設置專注時間</h3>
+                    <h6>（分鐘）</h6>
+                    <div class="input-group">
+                        <input type="number" id="focusTimeInput" value="25" min="1">
+                    </div>
+                </div>
                 <div class="progress-ring">
                     <svg width="120" height="120">
                         <circle class="progress-ring__background" r="55" cx="60" cy="60"></circle>
@@ -266,7 +335,13 @@
                 </div>
             </div>
             <div class="timer">
-                <h3>休息計時器</h3>
+                <div class="timer-settings">
+                    <h3>設置休息時間</h3>
+                    <h6>（分鐘）</h6>
+                    <div class="input-group">
+                        <input type="number" id="breakTimeInput" value="5" min="1">
+                    </div>
+                </div>
                 <div class="progress-ring">
                     <svg width="120" height="120">
                         <circle class="progress-ring__background" r="55" cx="60" cy="60"></circle>
@@ -298,11 +373,12 @@
 </div>
 
 <div class="filter-container">
-    <label for="dateRangeStart">篩選日期：</label>
-    <input type="date" id="dateRangeStart">
+    <label for="tableDateRangeStart">篩選日期：</label>
+    <input type="date" id="tableDateRangeStart">
     <span>到</span>
-    <input type="date" id="dateRangeEnd">
+    <input type="date" id="tableDateRangeEnd">
 </div>
+
 
 <table id="taskTable">
     <thead>
@@ -311,14 +387,21 @@
             <th>任務名稱</th>
             <th>是否完成</th>
             <th>分心原因</th>
-            <th>分心次數</th>
-            <th>分心總時間</th>
+            <th>專注時間</th>
+            <th>休息時間</th>
             <th>改善措施</th>
             <th>操作</th>
         </tr>
     </thead>
     <tbody></tbody>
 </table>
+
+<div class="filter-container">
+    <label for="dateRangeStart">篩選日期：</label>
+    <input type="date" id="dateRangeStart">
+    <span>到</span>
+    <input type="date" id="dateRangeEnd">
+</div>
 
 <div class="chart-container">
     <div class="chart-wrapper">
@@ -338,6 +421,9 @@
         const dateRangeStart = document.getElementById("dateRangeStart");
         const dateRangeEnd = document.getElementById("dateRangeEnd");
         const taskDate = document.getElementById("taskDate");
+
+        const today = new Date();
+        taskDate.value = today.toISOString().split("T")[0];
 
         const taskInputs = [
             document.getElementById("taskInput1"),
@@ -370,6 +456,8 @@
         let focusTimerInterval, breakTimerInterval;
         let focusSeconds = 0, breakSeconds = 0;
         let isFocusPaused = false, isBreakPaused = false;
+        let isFocusComplete = false; // 标记专注是否完成一圈
+        let isBreakComplete = false; // 标记休息是否完成一圈
 
         function formatTime(seconds) {
             const hrs = String(Math.floor(seconds / 3600)).padStart(2, '0');
@@ -384,6 +472,9 @@
         }
 
         function startFocusTimer() {
+            const focusTimeInput = document.getElementById("focusTimeInput").value;
+            const totalFocusTime = (parseInt(focusTimeInput) || 25) * 60; // 默认 25 分钟
+
             if (isFocusPaused) {
                 isFocusPaused = false;
             } else {
@@ -392,8 +483,19 @@
             clearInterval(focusTimerInterval);
             focusTimerInterval = setInterval(() => {
                 focusSeconds++;
-                focusTimerDisplay.textContent = `${formatTime(focusSeconds)}`;
-                setProgress(focusProgressCircle, (focusSeconds % 1500) / 15); // Assuming a 25-minute cycle
+                focusTimerDisplay.textContent = formatTime(focusSeconds);
+
+                // 更新进度圈
+                if (!isFocusComplete) {
+                    setProgress(focusProgressCircle, (focusSeconds / totalFocusTime) * 100);
+                }
+
+                // 如果时间超过设定时间，停止进度圈，但数字继续跑
+                if (focusSeconds >= totalFocusTime && !isFocusComplete) {
+                    isFocusComplete = true; // 标记一圈完成
+                    setProgress(focusProgressCircle, 100); // 进度圈保持满圈
+    
+                }
             }, 1000);
         }
 
@@ -405,11 +507,15 @@
         function stopFocusTimer() {
             clearInterval(focusTimerInterval);
             focusSeconds = 0;
+            isFocusComplete = false; // 重置状态
             focusTimerDisplay.textContent = `00:00:00`;
             setProgress(focusProgressCircle, 0);
+            document.getElementById("focusMessage").textContent = ""; // 清除提示
         }
 
         function startBreakTimer() {
+            const breakTimeInput = document.getElementById("breakTimeInput").value;
+            const totalBreakTime = (parseInt(breakTimeInput) || 5) * 60; // 默认 5 分钟
             if (isBreakPaused) {
                 isBreakPaused = false;
             } else {
@@ -418,8 +524,19 @@
             clearInterval(breakTimerInterval);
             breakTimerInterval = setInterval(() => {
                 breakSeconds++;
-                breakTimerDisplay.textContent = `${formatTime(breakSeconds)}`;
-                setProgress(breakProgressCircle, (breakSeconds % 300) / 3); // Assuming a 5-minute break
+                breakTimerDisplay.textContent = formatTime(breakSeconds);
+
+                // 更新进度圈
+                if (!isBreakComplete) {
+                    setProgress(breakProgressCircle, (breakSeconds / totalBreakTime) * 100);
+                }
+
+                // 如果时间超过设定时间，停止进度圈，但数字继续跑
+                if (breakSeconds >= totalBreakTime && !isBreakComplete) {
+                    isBreakComplete = true; // 标记一圈完成
+                    setProgress(breakProgressCircle, 100); // 进度圈保持满圈
+                   
+                }
             }, 1000);
         }
 
@@ -431,9 +548,21 @@
         function stopBreakTimer() {
             clearInterval(breakTimerInterval);
             breakSeconds = 0;
-            breakTimerDisplay.textContent = ` 00:00:00`;
+            isBreakComplete = false; // 重置状态
+            breakTimerDisplay.textContent = `00:00:00`;
             setProgress(breakProgressCircle, 0);
+            document.getElementById("breakMessage").textContent = ""; // 清除提示
         }
+
+        // 清除提示消息
+        function resetMessages() {
+            document.getElementById("focusMessage").textContent = "";
+            document.getElementById("breakMessage").textContent = "";
+        }
+
+        // 在开始计时时重置消息
+        startFocusTimerBtn.addEventListener("click", resetMessages);
+        startBreakTimerBtn.addEventListener("click", resetMessages);
 
         // Ensure that buttons are attached to corresponding event listeners
         startFocusTimerBtn.addEventListener("click", startFocusTimer);
@@ -489,6 +618,48 @@
             });
         }
 
+        
+        tableDateRangeStart.value = today.toISOString().split("T")[0];
+        tableDateRangeEnd.value = today.toISOString().split("T")[0];
+
+        // 表格篩選函式
+        function filterTableByCustomDate() {
+            const startDate = new Date(tableDateRangeStart.value);
+            const endDate = new Date(tableDateRangeEnd.value);
+
+            tableBody.innerHTML = ""; // 清空表格內容
+
+            tasks
+                .filter(task => {
+                    const taskDate = new Date(task.date);
+                    return taskDate >= startDate && taskDate <= endDate; // 過濾符合日期範圍的任務
+                })
+                .forEach((task, index) => {
+                    const row = document.createElement("tr");
+                    row.setAttribute("data-index", index);
+                    row.innerHTML = `
+                        <td>${task.date}</td>
+                        <td>${task.name}</td>
+                        <td contenteditable="true" data-index="${index}" data-field="completed">${task.completed || "否"}</td>
+                        <td contenteditable="true" data-index="${index}" data-field="reason">${task.reason || "無"}</td>
+                        <td contenteditable="true" data-index="${index}" data-field="distractions">${task.distractions || 0}</td>
+                        <td contenteditable="true" data-index="${index}" data-field="time">${task.time || 0}</td>
+                        <td contenteditable="true" data-index="${index}" data-field="solution">${task.solution || "無"}</td>
+                        <td><button onclick="deleteTask(${index})">刪除</button></td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+        }
+
+        // 初始化表格顯示
+        filterTableByCustomDate();
+
+        // 日期範圍輸入框的變更事件監聽
+        tableDateRangeStart.addEventListener("change", filterTableByCustomDate);
+        tableDateRangeEnd.addEventListener("change", filterTableByCustomDate);
+
+
+
         window.deleteTask = function(index) {
             tasks.splice(index, 1);
             localStorage.setItem("tasks", JSON.stringify(tasks));
@@ -496,9 +667,18 @@
             updateCharts();
         }
 
+    
  
 
         function updateCharts() {
+            
+             // 如果已有图表实例，先销毁它们
+            if (distractionCountChart) {
+                distractionCountChart.destroy();
+            }
+            if (distractionTimeChart) {
+                distractionTimeChart.destroy();
+            }
             const startDate = new Date(dateRangeStart.value || new Date());
             const endDate = new Date(dateRangeEnd.value || new Date());
 
@@ -506,6 +686,8 @@
                 const taskDate = new Date(task.date);
                 return taskDate >= startDate && taskDate <= endDate;
             });
+
+            console.log("Filtered Tasks:", filteredTasks);
 
             const dateData = {};
             filteredTasks.forEach(task => {
@@ -528,7 +710,7 @@
                 data: {
                     labels,
                     datasets: [{
-                        label: "每日分心次數",
+                        label: "每日專注時間",
                         data: distractionCounts,
                         borderColor: "#00d4ff",
                         backgroundColor: "rgba(0, 212, 255, 0.1)",
@@ -543,7 +725,7 @@
                     },
                     scales: {
                         x: { title: { display: true, text: "日期", color: "#ffffff" } },
-                        y: { title: { display: true, text: "分心次數", color: "#ffffff" } }
+                        y: { title: { display: true, text: "專注時間", color: "#ffffff" } }
                     }
                 }
             });
@@ -553,7 +735,7 @@
                 data: {
                     labels,
                     datasets: [{
-                        label: "每日分心時間（分鐘）",
+                        label: "每日休息時間（分鐘）",
                         data: distractionTimes,
                         borderColor: "#ff4b5c",
                         backgroundColor: "rgba(255, 75, 92, 0.1)",
@@ -568,7 +750,7 @@
                     },
                     scales: {
                         x: { title: { display: true, text: "日期", color: "#ffffff" } },
-                        y: { title: { display: true, text: "分心時間（分鐘）", color: "#ffffff" } }
+                        y: { title: { display: true, text: "休息時間", color: "#ffffff" } }
                     }
                 }
             });
@@ -602,7 +784,7 @@
 
             if (index !== null && field) {
                 tasks[index][field] = target.textContent;
-                localStorage.setItem("tasks", JSON.stringify(tasks));
+                localStorage.setItem("tasks", JSON.stringify(tasks));   
                 updateCharts();
             }
         });
@@ -611,7 +793,6 @@
         dateRangeEnd.addEventListener("change", updateCharts);
 
         // Initialize default date range (last 7 days)
-        const today = new Date();
         const lastWeek = new Date();
         lastWeek.setDate(today.getDate() - 7);
         dateRangeStart.value = lastWeek.toISOString().split("T")[0];
@@ -619,8 +800,8 @@
 
         // Initialize table, reminders, and charts
         populateTable();
-        renderCommonDistractions();
         updateCharts();
+        console.log("Loaded tasks:", tasks);
     });
 </script>
 </body>
